@@ -37,6 +37,12 @@ Floor magnets go either way up. Measure the magnets before printing, since
 cheap ones are often a tenth of a millimetre off, and change MAGNET_D and
 MAGNET_T to match.
 
+The tall tray is the same in every way but 50 mm deep, enough for a NEMA 17
+stepper motor lying on its side, or a servo standing up. The lid is a flat
+plate with the groove underneath, so it locks onto any tray's rim, the tongue
+on top, so another tray can stack on a lidded one, and the same tabs and slots,
+which are also what you lift it by.
+
 Every inside corner is the same curve, round in plan and from the floor up the
 wall, so each corner is a small bowl a fingertip sweeps a screw out of.
 
@@ -52,6 +58,7 @@ It writes, next to this script:
     stl/magnets/*.stl             the magnet version of each
     pictures/trays.png            the set stacked and laid out, a tray's underside, and cuts through two stacked trays
     pictures/trays-magnets.png    the magnet version, and a cut through two joined trays showing the magnets
+    pictures/tall-and-lid.png     the tall tray with a motor in it, and the lid
 
 Every tray prints the way it stands, in PLA, with no supports. The groove's
 roof is a short bridge, which needs nothing under it.
@@ -130,7 +137,9 @@ SET = [
     ("six", 3, 2, DEPTH),
     ("nine", 3, 3, DEPTH),
     ("open-deep", 1, 1, 30.0),
+    ("tall", 1, 1, 50.0),
 ]
+LID_T = 3.6  # the lid's plate: the groove underneath, and 1.8 mm over it
 FIT_TEST = 50.0  # the fit test: two small trays this size, with the same rim and groove
 
 # Colours for the picture, after the spools in the printer: white, light blue and tan PLA, and the magnets.
@@ -210,10 +219,10 @@ def tab(h):
     return plan([(-w0, 0.5), (w0, 0.5), (w0, 0), (w1, -out), (-w1, -out), (-w0, 0)], 0, h)
 
 
-def slot(h):
+def slot(h, short=SLOT_SHORT):
     """The slot a tab slides into, on the front wall. The tab's wall is SIDE_GAP out, so g there is 0."""
     out = SIDE_GAP - JOIN_FIT
-    top = h - SLOT_SHORT
+    top = h - short
     block = plan([(-SLOT_W / 2, 0.5), (SLOT_W / 2, 0.5), (SLOT_W / 2, -out), (-SLOT_W / 2, -out)], 0, top)
     w0 = tab_width(SIDE_GAP) / 2 + JOIN_FIT  # at this wall
     w1 = tab_width(-0.2) / 2 + JOIN_FIT  # just past the block's outer face
@@ -259,22 +268,9 @@ def tray(cols=1, rows=1, depth=DEPTH, curve=CURVE, size=SIZE, magnets=False, joi
         p -= bowl(x0, x0 + cw, y0, y0 + cd, floor, top + 1, r)
     p -= inset(size, top, h + 1, t, ro)
 
-    # The tongue, on the inner half of the rim.
-    tongue = inset(size, h - 0.01, h + TONGUE_H, t - TONGUE_W, ro)
-    tongue = tongue.chamfer(TONGUE_LEAD, None, tongue.edges().group_by(Axis.Z)[-1])
-    p += tongue - inset(size, h - 1, h + TONGUE_H + 1, t, ro)
-
-    # The groove underneath, where the tongue of the tray below goes.
-    a, b = t - TONGUE_W - FIT, t + FIT  # its outer and inner edges, in from the outline
-    g, top = GROOVE_LEAD, TONGUE_H + 0.2
-    outer = taper(size, -0.01, a - g - 0.01, g, a, ro) + inset(size, g - 0.01, top, a, ro)
-    inner = taper(size, -0.02, b + g + 0.02, g, b, ro) + inset(size, g - 0.01, top + 1, b, ro)
-    p -= outer - inner
-
-    # The side join: a tab on the left of each side and a slot on the right.
+    p = locking(p, size, h, ro)
     if join:
-        for x, y, angle, left in side_spots(size):
-            p += on_wall(tab(h) if left else slot(h), x, y, angle)
+        p = joining(p, size, h)
 
     # The magnet pockets: closed in by the print once it carries on after each pause.
     if magnets:
@@ -288,6 +284,42 @@ def tray(cols=1, rows=1, depth=DEPTH, curve=CURVE, size=SIZE, magnets=False, joi
         for x, y in floor_spots(cols, rows, size):
             p -= Pos(x, y, (MAGNET_SKIN + FLOOR_PAUSE) / 2) * Cylinder((MAGNET_D + MAGNET_FIT) / 2, FLOOR_PAUSE - MAGNET_SKIN)
     return p
+
+
+def locking(p, size, h, ro):
+    """Add the tongue on the rim at height h, and cut the groove underneath, where the tongue of the tray below goes."""
+    t = WALL
+    tongue = inset(size, h - 0.01, h + TONGUE_H, t - TONGUE_W, ro)
+    tongue = tongue.chamfer(TONGUE_LEAD, None, tongue.edges().group_by(Axis.Z)[-1])
+    p += tongue - inset(size, h - 1, h + TONGUE_H + 1, t, ro)
+    a, b = t - TONGUE_W - FIT, t + FIT  # the groove's outer and inner edges, in from the outline
+    g, top = GROOVE_LEAD, TONGUE_H + 0.2
+    outer = taper(size, -0.01, a - g - 0.01, g, a, ro) + inset(size, g - 0.01, top, a, ro)
+    inner = taper(size, -0.02, b + g + 0.02, g, b, ro) + inset(size, g - 0.01, top + 1, b, ro)
+    return p - (outer - inner)
+
+
+def joining(p, size, h, short=SLOT_SHORT):
+    """Add the side join, a tab on the left of each side and a slot on the right, standing h tall."""
+    for x, y, angle, left in side_spots(size):
+        p += on_wall(tab(h) if left else slot(h, short), x, y, angle)
+    return p
+
+
+def lid(size=SIZE, curve=CURVE, join=True):
+    """A flat lid: the groove underneath locks it onto a tray's rim, and the tongue on top takes another tray.
+    Its slots run its full thickness, so a tray beside it can be lowered past."""
+    ro = curve + WALL
+    p = locking(rounded(0, size, 0, size, 0, LID_T, ro), size, LID_T, ro)
+    return joining(p, size, LID_T, short=0.0) if join else p
+
+
+def nema17(x, y, z):
+    """A NEMA 17 stepper motor lying on its side, its shaft along +X, for the picture: a 48 mm body."""
+    body = box(x - 24, x + 24, y - 21.15, y + 21.15, z, z + 42.3)
+    boss = Pos(x + 25, y, z + 21.15) * Rot(0, 90, 0) * Cylinder(11, 2)
+    shaft = Pos(x + 38, y, z + 21.15) * Rot(0, 90, 0) * Cylinder(2.5, 24)
+    return body + boss + shaft
 
 
 def magnets(cols, rows, size=SIZE):
@@ -426,6 +458,28 @@ def picture_magnets(path):
         p.unlink()
 
 
+def picture_tall(path):
+    """The tall tray with a NEMA 17 in it and its lid lifted off, and a lidded tall tray joined to a shallow one."""
+    at = lambda shape, x, y, z=0.0: Pos(x, y, z) * shape  # noqa: E731
+    tall, cap, four = tray(1, 1, 50.0), lid(), tray(2, 2)
+    h = height(50.0)
+    scene = [(tall, TAN), (nema17(44, SIZE / 2, FLOOR), STEEL), (at(cap, 0, 0, h + 34), WHITE)]
+    x0, y0 = SIZE + 55, -70
+    scene += [(at(tall, x0, y0), BLUE), (at(cap, x0, y0, h), WHITE), (at(four, x0 + SIZE + SIDE_GAP, y0), TAN)]
+    scene += [(at(cap, x0 + SIZE + SIDE_GAP, y0, height()), WHITE)]
+    look = (x0, 20, 40)
+    render(scene, path.with_suffix(".set.png"), eye=(look[0] + 1500, look[1] - 1875, look[2] + 1725), target=look, size=(1300, 1000), scale=2.0)
+    sheet(
+        path,
+        "Workshop trays: the tall tray and the lid",
+        [(path.with_suffix(".set.png"), ["The tall tray is 50 mm deep inside: a NEMA 17 motor lies on its side with room to spare.",
+                                          "The lid locks onto any tray, takes another tray on top, and joins its neighbours."])],
+        columns=1,
+        date="2026-10-25",
+    )
+    path.with_suffix(".set.png").unlink()
+
+
 def counts(text):
     a, b = text.lower().split("x")
     return int(a), int(b)
@@ -452,16 +506,20 @@ def main():
 
     for name, c, r, depth in SET:
         export(name, tray(c, r, depth))
+    export("lid", lid())
     export("fit-test", tray(1, 1, 8.0, 8.0, FIT_TEST, join=False))
     print(f"each tray adds {height():.1f} mm to a stack, and the deep one {height(30.0):.1f} mm")
     print("the magnet version:")
     for name, c, r, depth in SET:
         export(name, tray(c, r, depth, magnets=True), OUT / "magnets")
         print(f"{'':12} {len(magnets(c, r))} magnets")
+    export("lid", lid(join=False), OUT / "magnets")
+    print(f"{'':12} no magnets: a flush lid for the magnet trays")
     print(f"each magnet tray adds {height(magnets=True):.1f} mm to a stack; {pauses}")
     (HERE / "pictures").mkdir(exist_ok=True)
     picture(HERE / "pictures" / "trays.png")
     picture_magnets(HERE / "pictures" / "trays-magnets.png")
+    picture_tall(HERE / "pictures" / "tall-and-lid.png")
     print("written to", HERE)
 
 

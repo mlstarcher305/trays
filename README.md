@@ -1,13 +1,13 @@
 # Trays
 
-These are shallow stacking trays for a workshop desk, sized for screws, nuts, small electronic parts and small prints. Every tray is the same 120 mm square, so any tray stacks on any other, and trays join together side by side on the desk. Every inside corner is a 10 mm curve, round in plan and from the floor up the wall, so a fingertip can sweep a small screw out of a corner.
+These are stacking trays for a workshop desk, sized for screws, nuts, small electronic parts, motors and small prints. Every tray is the same 120 mm square, so any tray stacks on any other, and trays join together side by side on the desk. Every inside corner is a 10 mm curve, round in plan and from the floor up the wall, so a fingertip can sweep a small screw out of a corner.
 
 <p>
 <img src="pictures/printed-side-by-side.jpg" width="49%" alt="A four-compartment and a six-compartment tray, printed in light blue PLA, joined side by side on a counter">
 <img src="pictures/printed-stacked.jpg" width="49%" alt="The six-compartment tray stacked on the four-compartment tray, with their side tabs lined up">
 </p>
 
-The four- and six-compartment trays have been printed in PLA on a Bambu Lab X2D, and they stack and join as designed. The other trays come from the same script but haven't been printed yet, and the magnet version hasn't been printed at all.
+The four- and six-compartment trays have been printed in PLA on a Bambu Lab X2D, and they stack and join as designed. The other trays and the lid come from the same script but haven't been printed yet, and the magnet version hasn't been printed at all.
 
 They were made for the workshop of [THE MACHINE](https://cultofthemachine.org), an art project of mechanical instruments.
 
@@ -23,6 +23,8 @@ The STLs are in `stl/`, each standing the way it prints.
 | `six.stl` | Six, 3 x 2 | 20 mm |
 | `nine.stl` | Nine, 3 x 3 | 20 mm |
 | `open-deep.stl` | One | 30 mm |
+| `tall.stl` | One, deep enough for a NEMA 17 stepper motor lying on its side or a servo standing up | 50 mm |
+| `lid.stl` | A flat lid that locks onto any tray | |
 | `fit-test.stl` | A small 50 mm tray with the same rim and groove and no tabs, for checking the stacking fit on your printer | 8 mm |
 
 ## How they stack and join
@@ -33,15 +35,23 @@ Each side has a dovetail tab on its left and a matching slot on its right, both 
 
 ![The set stacked and laid out, a tray's underside, cuts through two stacked trays, and two joined trays seen from above](pictures/trays.png)
 
+## The tall tray and the lid
+
+The tall tray is the same as the others in every way except its depth, 50 mm inside. A NEMA 17 stepper motor, 42.3 mm square, lies on its side in it with room to spare and the lid still closes. It stacks with the shallow trays and joins them side by side, whatever their heights.
+
+The lid is a flat plate with the groove underneath, so it locks onto any tray's rim the way a tray does. It has the tongue on top, so another tray can stack on a lidded one, and the same tabs and slots, so lids on joined trays join too. The tabs are also what you lift it by. A tray stacked on top already works as a lid for the one below, so the lid is for the top of a stack or a tray on its own.
+
+![The tall tray with a NEMA 17 motor lying in it and its lid lifted off, and a lidded tall tray joined to a lidded shallow tray](pictures/tall-and-lid.png)
+
 ## Printing
 
-The trays print the way they stand, with no supports. The groove under the floor has a short bridged roof, which prints cleanly without anything under it. The printed pair used PLA at 0.16 mm layers with Bambu Studio's standard settings, and a four- and a six-compartment tray together took 4 hours 6 minutes and 150 g. On a 256 mm bed, two trays fit on one plate, one behind the other.
+The trays and the lid print the way they sit, groove side down, with no supports. The groove has a short bridged roof, which prints cleanly without anything under it. The printed pair used PLA at 0.16 mm layers with Bambu Studio's standard settings, and a four- and a six-compartment tray together took 4 hours 6 minutes and 150 g. On a 256 mm bed, two trays fit on one plate, one behind the other.
 
 The stacking fit has 0.25 mm of clearance all round, and the tabs and slots have the same. If stacks come out tight or loose on your printer, print two fit tests, change `FIT` in `model.py`, and remake the files.
 
 ## The magnet version
 
-The trays in `stl/magnets/` have flush walls and no tabs. They're designed for 6 x 2 mm neodymium disc magnets, buried in the plastic while the print is paused. Two magnets on each side stand on edge low in the wall, facing out, and pull trays together side by side. One or more lie flat in the floor under each compartment and hold small steel parts down. A tray takes 12 to 17 magnets, depending on how many compartments it has. The floor is thicker, 3.6 mm, to bury them, so these trays are 2 mm taller than the plain ones. Both kinds stack on each other.
+The trays in `stl/magnets/` have flush walls and no tabs, and the lid there is flush too, with no magnets. They're designed for 6 x 2 mm neodymium disc magnets, buried in the plastic while the print is paused. Two magnets on each side stand on edge low in the wall, facing out, and pull trays together side by side. One or more lie flat in the floor under each compartment and hold small steel parts down. A tray takes 12 to 17 magnets, depending on how many compartments it has. The floor is thicker, 3.6 mm, to bury them, so these trays are 2 mm taller than the plain ones. Both kinds stack on each other.
 
 To print one, add two pauses in your slicer. The first goes at the first layer at or above 2.9 mm, and that's when the floor magnets go in, either way up. The second goes at the first layer at or above 8.9 mm, for the wall magnets. In Bambu Studio, pauses are added on the layer slider in the preview.
 
